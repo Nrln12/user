@@ -9,6 +9,7 @@ import java.util.List;
 @Repository
 public interface RoleRepository extends JpaRepository<Role,Long> {
     List<Role> findByStatusTrue();
-    List<Role> findByRoleIdAndStatusTrue(Long id);
+    Role findByRoleIdAndStatusTrue(Long id);
+    Role findByStatusTrueAndName(String name);
 
 }

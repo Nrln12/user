@@ -1,11 +1,15 @@
 package com.bankofbaku.user.entity;
 
-import lombok.Data;
+import lombok.*;
 
 import javax.persistence.*;
 
 @Entity
+@Setter
+@Getter
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name="role")
 public class Role {
     @Id
@@ -13,6 +17,6 @@ public class Role {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long roleId;
     private String name;
-    private boolean status;
+    private boolean status=true;
 
 }
