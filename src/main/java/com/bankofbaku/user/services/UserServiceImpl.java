@@ -1,16 +1,19 @@
 package com.bankofbaku.user.services;
 
 import com.bankofbaku.user.dto.UserDto;
+import com.bankofbaku.user.entity.Role;
 import com.bankofbaku.user.entity.User;
 import com.bankofbaku.user.exceptions.BadRequestException;
 import com.bankofbaku.user.exceptions.IsNotValidException;
 import com.bankofbaku.user.exceptions.NotFoundException;
 import com.bankofbaku.user.repositories.UserRepository;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -19,10 +22,13 @@ public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
 
-    public UserServiceImpl(UserRepository userRepository, ModelMapper modelMapper) {
+
+    public UserServiceImpl(UserRepository userRepository,ModelMapper modelMapper) {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
     }
+
+
 
     @Override
     public List<UserDto> getAllUsers() throws NotFoundException {
@@ -78,6 +84,7 @@ public class UserServiceImpl implements UserService{
         }catch (Exception ex){
             throw new Exception(ex);
         }
+        user.setUserName(userDto.getUserName());
         user.setPassword(encodePassword(userDto.getPassword()));
         userRepository.save(user);
         return modelMapper.map(user, UserDto.class);
@@ -93,13 +100,23 @@ public class UserServiceImpl implements UserService{
     public void deleteById(Long id) {
         Optional<User> u = Optional.ofNullable(userRepository.findByUserIdAndStatusTrue(id));
         if(u.isEmpty()){
-            throw new NotFoundException("User not found");
+            throw new NotFoundException("User is not found");
         }
         User currUser=u.get();
         currUser.setStatus(false);
         userRepository.save(currUser);
     }
 
+
+    public UserDto getUserById(Long id){
+        Optional<User> u = Optional.ofNullable(userRepository.findByUserIdAndStatusTrue(id));
+        if(u.isEmpty()){
+            throw new NotFoundException("User is not found");
+        }
+        User currUser=u.get();
+        return modelMapper.map(currUser, UserDto.class);
+
+    }
     private boolean isValidUserName(String userName){
         String regex="^[a-zA-Z0-9._-]{3,}$";
         return userName.matches(regex) ? true : false;

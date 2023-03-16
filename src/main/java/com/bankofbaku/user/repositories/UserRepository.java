@@ -1,5 +1,6 @@
 package com.bankofbaku.user.repositories;
 
+import com.bankofbaku.user.dto.UserDto;
 import com.bankofbaku.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

@@ -3,6 +3,8 @@ package com.bankofbaku.user.controller;
 import com.bankofbaku.user.dto.UserDto;
 import com.bankofbaku.user.services.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Slf4j
 public class UserController {
     private final UserServiceImpl userServiceImpl;
 
@@ -18,9 +21,13 @@ public class UserController {
     public List<UserDto> getAllUsers(){
         return userServiceImpl.getAllUsers();
     }
-
-    @PostMapping
-    public UserDto addUser(@RequestBody UserDto userDto) throws Exception {
+    @GetMapping("/{id}")
+    public UserDto getUserById(@PathVariable Long id){
+        return userServiceImpl.getUserById(id);
+    }
+    @PostMapping("/new")
+    public UserDto addUser(@RequestBody UserDto userDto, Authentication authentication) throws Exception {
+        log.info("auth: {}", authentication);
         return userServiceImpl.addUser(userDto);
     }
     @PutMapping("/update/{id}")
