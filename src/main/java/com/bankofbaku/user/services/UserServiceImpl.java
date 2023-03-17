@@ -74,6 +74,7 @@ public class UserServiceImpl implements UserService{
         }
         User user = recentUser.get();
         try{
+
             if(!isValidUserName(userDto.getUserName())){
                 throw new IsNotValidException("Username is not valid");
             }
