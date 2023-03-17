@@ -19,6 +19,7 @@ public class UserController {
 
     @GetMapping
     public List<UserDto> getAllUsers(){
+
         return userServiceImpl.getAllUsers();
     }
     @GetMapping("/{id}")
@@ -30,6 +31,11 @@ public class UserController {
         log.info("auth: {}", authentication);
         return userServiceImpl.addUser(userDto);
     }
+//@PostMapping("/new")
+//public UserDto addUser(@RequestBody UserDto userDto) throws Exception {
+//
+//    return userServiceImpl.addUser(userDto);
+//}
     @PutMapping("/update/{id}")
     public UserDto updateUser(@PathVariable Long id, @RequestBody  UserDto userDto) throws Exception {
         return userServiceImpl.updateUser(id, userDto);
