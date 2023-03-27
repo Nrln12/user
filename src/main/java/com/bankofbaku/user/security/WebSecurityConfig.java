@@ -37,16 +37,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         auth.authenticationProvider(authenticationProvider());
     }
 
+
     @Override
     protected void configure(HttpSecurity http) throws Exception{
         http.authorizeRequests()
-                .antMatchers(HttpMethod.GET,"/").hasAnyAuthority("USER","CREATOR","EDITOR","ADMIN")
-                .antMatchers(HttpMethod.POST,"api/users/new").hasAnyAuthority("ADMIN","CREATOR")
-                .antMatchers(HttpMethod.PUT,"api/users/update/**").hasAnyAuthority("ADMIN","EDITOR")
-                .antMatchers(HttpMethod.PUT,"/delete/**").hasAnyAuthority("ADMIN")
+                .antMatchers(HttpMethod.GET,"/api/users/").hasAnyAuthority("USER","CREATOR","EDITOR","ADMIN")
+                .antMatchers(HttpMethod.POST,"/api/users/new").hasAnyAuthority("ADMIN","CREATOR")
+                .antMatchers(HttpMethod.PUT,"/api/users/update/**").hasAnyAuthority("ADMIN","EDITOR")
+                .antMatchers(HttpMethod.PUT,"api/users/delete/**").hasAnyAuthority("ADMIN")
                 .anyRequest().authenticated().and().csrf().disable().httpBasic();
-
     }
-
 
 }
