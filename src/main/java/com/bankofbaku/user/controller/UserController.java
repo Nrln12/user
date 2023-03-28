@@ -1,6 +1,7 @@
 package com.bankofbaku.user.controller;
 
 import com.bankofbaku.user.dto.UserDto;
+import com.bankofbaku.user.entity.User;
 import com.bankofbaku.user.services.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,7 @@ public class UserController {
     public UserDto updateUser(@PathVariable Long id, @RequestBody  UserDto userDto) throws Exception {
         return userServiceImpl.updateUser(id, userDto);
     }
-    @PutMapping("/delete/{id}")
+    @DeleteMapping("/delete/{id}")
     public void deleteUser(@PathVariable Long id){
         userServiceImpl.deleteById(id);
     }

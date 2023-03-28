@@ -1,9 +1,9 @@
 package com.bankofbaku.user.services;
 
 import com.bankofbaku.user.dto.UserDto;
+import com.bankofbaku.user.entity.User;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
 import java.util.List;
 
 @Service

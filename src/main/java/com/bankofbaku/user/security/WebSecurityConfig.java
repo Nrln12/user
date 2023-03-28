@@ -12,6 +12,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.util.AntPathMatcher;
+
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -40,13 +42,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception{
         http.authorizeRequests()
-                .antMatchers(HttpMethod.GET,"/").hasAnyAuthority("USER","CREATOR","EDITOR","ADMIN")
-                .antMatchers(HttpMethod.POST,"api/users/new").hasAnyAuthority("ADMIN","CREATOR")
-                .antMatchers(HttpMethod.PUT,"api/users/update/**").hasAnyAuthority("ADMIN","EDITOR")
-                .antMatchers(HttpMethod.PUT,"/delete/**").hasAnyAuthority("ADMIN")
+                .antMatchers(HttpMethod.GET,"/api/users/").hasAnyAuthority("USER","CREATOR","EDITOR","ADMIN")
+                .antMatchers(HttpMethod.POST,"/api/users/new").hasAnyAuthority("ADMIN","CREATOR")
+                .antMatchers(HttpMethod.PUT,"/api/users/update/**").hasAnyAuthority("ADMIN","EDITOR")
+                .antMatchers(HttpMethod.DELETE,"/api/users/delete/**").hasAuthority("ADMIN")
                 .anyRequest().authenticated().and().csrf().disable().httpBasic();
-
     }
 
+    @Bean
+    public AntPathMatcher antPathMatcher() {
+        return new AntPathMatcher();
+    }
 
 }

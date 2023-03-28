@@ -1,44 +1,53 @@
 package com.bankofbaku.user.services;
 
 import com.bankofbaku.user.dto.UserDto;
-import com.bankofbaku.user.entity.Role;
 import com.bankofbaku.user.entity.User;
 import com.bankofbaku.user.exceptions.BadRequestException;
 import com.bankofbaku.user.exceptions.IsNotValidException;
 import com.bankofbaku.user.exceptions.NotFoundException;
 import com.bankofbaku.user.repositories.UserRepository;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.transaction.Transactional;
+
 
 @Service
 public class UserServiceImpl implements UserService{
+    @PersistenceContext
+    @Autowired
+    private EntityManager em;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
-
-
     public UserServiceImpl(UserRepository userRepository,ModelMapper modelMapper) {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
     }
 
-
-
+    @Transactional
     @Override
     public List<UserDto> getAllUsers() throws NotFoundException {
-        List<UserDto> userDtos =  userRepository.findByStatusTrue().stream().map(user -> modelMapper.map(user, UserDto.class)).collect(Collectors.toList());
-        if(userDtos.size()==0){
-            throw new NotFoundException("No data found");
-        }else{
-            return userDtos;
-        }
+        Object users =  em.createNamedStoredProcedureQuery("getAllUsers").getResultList().stream().map(user-> modelMapper.map(user, UserDto.class)).collect(Collectors.toList());
+        return (List<UserDto>) users;
     }
+//    @Override
+//    public List<UserDto> getAllUsers() throws NotFoundException {
+//        List<UserDto> userDtos =  userRepository.findByStatusTrue().stream().map(user -> modelMapper.map(user, UserDto.class)).collect(Collectors.toList());
+//        if(userDtos.size()==0){
+//            throw new NotFoundException("No data found");
+//        }else{
+//            return userDtos;
+//        }
+//    }
 
     @Override
     public UserDto addUser(UserDto userDto) throws Exception {
@@ -103,9 +112,7 @@ public class UserServiceImpl implements UserService{
         if(u.isEmpty()){
             throw new NotFoundException("User is not found");
         }
-        User currUser=u.get();
-        currUser.setStatus(false);
-        userRepository.save(currUser);
+        userRepository.deleteById(id);
     }
 
 
