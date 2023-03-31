@@ -11,12 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 
@@ -33,21 +33,108 @@ public class UserServiceImpl implements UserService{
         this.modelMapper = modelMapper;
     }
 
-    @Transactional
+    // Calling by stored procedure
     @Override
-    public List<UserDto> getAllUsers() throws NotFoundException {
+    public List<UserDto> getAllUsersProc() throws NotFoundException {
         Object users =  em.createNamedStoredProcedureQuery("getAllUsers").getResultList().stream().map(user-> modelMapper.map(user, UserDto.class)).collect(Collectors.toList());
         return (List<UserDto>) users;
     }
-//    @Override
-//    public List<UserDto> getAllUsers() throws NotFoundException {
-//        List<UserDto> userDtos =  userRepository.findByStatusTrue().stream().map(user -> modelMapper.map(user, UserDto.class)).collect(Collectors.toList());
-//        if(userDtos.size()==0){
-//            throw new NotFoundException("No data found");
-//        }else{
-//            return userDtos;
-//        }
-//    }
+    public UserDto getUserByIdProc(Long id) throws NoResultException {
+       Optional<Object> u = Optional.ofNullable(em.createNamedStoredProcedureQuery("getUserById").setParameter("id",id).getSingleResult());
+        if(u.isEmpty()){
+            throw new NoResultException("User doesn't exist");
+        }
+        Object user=  u.get();
+        return modelMapper.map(user, UserDto.class);
+    }
+    public List<UserDto> getUserByName(String name) throws NotFoundException{
+        List<UserDto> userDtos = (List<UserDto>) em.createNamedStoredProcedureQuery("getUserByName").setParameter("userName",name).getResultList().stream().map(user-> modelMapper.map(user,UserDto.class)).collect(Collectors.toList());
+        if(userDtos.isEmpty()){
+            throw new NotFoundException("User doesn't exist");
+        }
+        return userDtos;
+    }
+    @Override
+    public Optional<UserDto> addUserProc(String userName, String password) throws Exception {
+       List<User> u= em.createNamedStoredProcedureQuery("getUserByName").setParameter("userName",userName).getResultList().stream().toList();
+       if(u.size()!=0){
+           throw new BadRequestException("This username has already taken");
+       }
+       try{
+           if(!isValidUserName(userName)){
+               throw new IsNotValidException("Not valid username");
+           }
+           if(!isValidPassword(password)){
+               throw new IsNotValidException("Not valid password");
+           }
+           password=encodePassword(password);
+
+       }catch (Exception ex){
+           throw new Exception(ex);
+       }
+       userRepository.addUserProc(userName,password);
+       Optional<UserDto> userDto=getUserByName(userName).stream().findFirst();
+       return userDto;
+    }
+
+    @Override
+    public Optional<UserDto> updateName(Long id, String userName) throws Exception {
+        Optional<UserDto> u= Optional.ofNullable(getUserByIdProc(id));
+       if(u.isEmpty()) {
+           throw new NotFoundException("User is not found");
+       }
+       try{
+           if(!isValidUserName(userName)){
+               throw new IsNotValidException("User name is not valid");
+           }
+       }catch (Exception ex){
+           throw new Exception(ex);
+       }
+       userRepository.updateName(id, userName);
+       return u;
+    }
+    @Override
+    public Optional<UserDto> updatePsw(Long id, String psw){
+       Optional<UserDto> u= Optional.ofNullable(getUserByIdProc(id));
+       if(u.isEmpty()){
+           throw new NotFoundException("User not found");
+       }
+        if(!isValidPassword(psw))
+            throw new IsNotValidException("Password is not valid");
+        userRepository.updatePsw(id, encodePassword(psw));
+        return u;
+    }
+    public void deleteUserById(Long id) throws Exception{
+        Optional<UserDto> userDto = Optional.ofNullable(getUserByIdProc(id));
+        if(userDto.isEmpty()){
+            throw new NotFoundException("User not found");
+        }
+        em.createNamedStoredProcedureQuery("deleteUserById").setParameter("id", id).execute();
+    }
+
+    // call by function
+    public String searchUser(Long id){
+       return userRepository.searchUser(id);
+    }
+    // Calling by methods
+    @Override
+    public List<UserDto> getAllUsers() throws NotFoundException {
+        List<UserDto> userDtos =  userRepository.findByStatusTrue().stream().map(user -> modelMapper.map(user, UserDto.class)).collect(Collectors.toList());
+        if(userDtos.size()==0){
+            throw new NotFoundException("No data found");
+        }else{
+            return userDtos;
+        }
+    }
+    public UserDto getUserById(Long id){
+        Optional<User> u = Optional.ofNullable(userRepository.findByUserIdAndStatusTrue(id));
+        if(u.isEmpty()){
+            throw new NotFoundException("User is not found");
+        }
+        User currUser=u.get();
+        return modelMapper.map(currUser, UserDto.class);
+
+    }
 
     @Override
     public UserDto addUser(UserDto userDto) throws Exception {
@@ -106,7 +193,6 @@ public class UserServiceImpl implements UserService{
         return null;
     }
 
-    @Override
     public void deleteById(Long id) {
         Optional<User> u = Optional.ofNullable(userRepository.findByUserIdAndStatusTrue(id));
         if(u.isEmpty()){
@@ -116,15 +202,7 @@ public class UserServiceImpl implements UserService{
     }
 
 
-    public UserDto getUserById(Long id){
-        Optional<User> u = Optional.ofNullable(userRepository.findByUserIdAndStatusTrue(id));
-        if(u.isEmpty()){
-            throw new NotFoundException("User is not found");
-        }
-        User currUser=u.get();
-        return modelMapper.map(currUser, UserDto.class);
 
-    }
     private boolean isValidUserName(String userName){
         String regex="^[a-zA-Z0-9._-]{3,}$";
         return userName.matches(regex) ? true : false;
